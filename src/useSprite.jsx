@@ -12,7 +12,7 @@ const Container = styled.div`
 `;
 
 const Image = styled.img`
-  transform: ${({ x, y }) => `translate(-${x + 2}px, -${y}px)`};
+  transform: ${({ x, y }) => `translate(-${x}px, -${y}px)`};
 `;
 
 function Spritesheet({

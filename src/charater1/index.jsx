@@ -1,4 +1,4 @@
-import React, { useState, useReducer, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
 
 import useInterval from 'lib/useInterval';
@@ -6,18 +6,8 @@ import useEventListener from 'lib/useEventListerner';
 import useSprite from 'useSprite';
 import charaterScr from './character1_animations.png';
 
-/**
- * run
- * atk1
- * atk2
- * atk3
- * change state
- * die
- * idle
- * menu
- */
-
 const animations = {
+  idle: 6,
   run: 0,
   atk1: 1,
   atk2: 2,
@@ -29,6 +19,7 @@ const spriteSheetConfig = {
   frameWidth: 128,
   frameHeight: 128,
   animations: {
+    [animations.idle]: 4,
     [animations.run]: 7,
     [animations.atk1]: 8,
     [animations.atk2]: 21,
@@ -42,6 +33,15 @@ const Controller = styled.div`
   top: ${({ y }) => y}px;
 `;
 
+const CollisionBox = styled.div`
+  /* border: solid 1px aliceblue; */
+  height: 45%;
+  width: 21%;
+  position: absolute;
+  top: 98%;
+  right: 36.4%;
+`;
+
 function Character() {
   const [animation, setAnimation] = useState(animations.run);
   const [Sprite, nextAnimationStep] = useSprite(spriteSheetConfig, animation);
@@ -51,7 +51,8 @@ function Character() {
     setPressedKeys({ ...pressedKeys, [e.keyCode]: true });
   });
   useEventListener('keyup', e => {
-    setPressedKeys({ ...pressedKeys, [e.keyCode]: false });
+    delete pressedKeys[e.keyCode];
+    setPressedKeys(pressedKeys);
   });
 
   const [movedDistance, setMoveDistance] = useState(0);
@@ -72,19 +73,29 @@ function Character() {
     setBlockingAction(true);
   }, []);
 
+  const idle = useCallback(() => {
+    setAnimation(animations.idle);
+    nextAnimationStep();
+  }, [nextAnimationStep]);
+
   useInterval(() => {
     if (isBlockingAction) return setBlockingAction(nextAnimationStep());
 
+    if (pressedKeys[39]) move(false);
+    if (pressedKeys[37]) move(true);
     if (pressedKeys[81]) return initBlockingAnimation(animations.atk1);
     if (pressedKeys[87]) return initBlockingAnimation(animations.atk2);
     if (pressedKeys[69]) return initBlockingAnimation(animations.atk3);
-    if (pressedKeys[39]) move(false);
-    if (pressedKeys[37]) move(true);
-    return setAnimation(animations.run);
   }, 55);
+
+  useInterval(() => {
+    if (isBlockingAction) return;
+    if (Object.keys(pressedKeys).length === 0) idle();
+  }, 160);
 
   return (
     <Controller x={movedDistance} y={100}>
+      <CollisionBox />
       <Sprite scale={2.5} flipX={direction} />
     </Controller>
   );
