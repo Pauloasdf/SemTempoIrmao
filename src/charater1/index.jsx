@@ -31,6 +31,7 @@ const spriteSheetConfig = {
   animations: {
     [animations.run]: 7,
     [animations.atk1]: 8,
+    [animations.atk2]: 21,
     [animations.atk3]: 15,
   },
 };
@@ -66,22 +67,24 @@ function Character() {
   );
 
   const [isBlockingAction, setBlockingAction] = useState(false);
-  const attack1 = useCallback(() => {
-    setAnimation(animations.atk1);
+  const initBlockingAnimation = useCallback(anim => {
+    setAnimation(anim);
     setBlockingAction(true);
   }, []);
 
   useInterval(() => {
     if (isBlockingAction) return setBlockingAction(nextAnimationStep());
 
-    if (pressedKeys[81]) return attack1();
+    if (pressedKeys[81]) return initBlockingAnimation(animations.atk1);
+    if (pressedKeys[87]) return initBlockingAnimation(animations.atk2);
+    if (pressedKeys[69]) return initBlockingAnimation(animations.atk3);
     if (pressedKeys[39]) move(false);
     if (pressedKeys[37]) move(true);
     return setAnimation(animations.run);
   }, 55);
 
   return (
-    <Controller x={movedDistance} y={-100}>
+    <Controller x={movedDistance} y={100}>
       <Sprite scale={2.5} flipX={direction} />
     </Controller>
   );
