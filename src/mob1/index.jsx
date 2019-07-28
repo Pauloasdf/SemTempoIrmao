@@ -72,7 +72,7 @@ function Mob1() {
   );
   useInterval(() => {
     isGoingRight = !isGoingRight;
-  }, 5000);
+  }, 4900);
 
   //   const [isBlockingAction, setBlockingAction] = useState(false);
   //   const initBlockingAnimation = useCallback(anim => {
