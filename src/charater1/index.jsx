@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 
+import charaterScr from './charater1_animations.png';
+
 /**
  * run
  * atk1
@@ -32,4 +34,17 @@ function Spritesheet({ src, scale, tileWidth, tileHeight, animation, frame }) {
   );
 }
 
-export default Spritesheet;
+function Character1() {
+  return (
+    <Spritesheet
+      src={charaterScr}
+      scale={1}
+      tileWidth={128}
+      tileHeight={128}
+      animation={1}
+      frame={1}
+    />
+  );
+}
+
+export default Character1;
