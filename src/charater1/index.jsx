@@ -1,12 +1,9 @@
-import React, {
-  useState,
-  useMemo,
-  useCallback,
-  useEffect,
-  useRef,
-} from 'react';
+import React, { useState, useReducer, useCallback } from 'react';
 import styled from 'styled-components';
 
+import useInterval from 'lib/useInterval';
+import useEventListener from 'lib/useEventListerner';
+import useSprite from 'useSprite';
 import charaterScr from './character1_animations.png';
 
 /**
@@ -20,26 +17,6 @@ import charaterScr from './character1_animations.png';
  * menu
  */
 
-const Container = styled.div`
-  width: ${({ width }) => width}px;
-  height: ${({ height }) => height}px;
-  overflow: hidden;
-  transform: scale(${({ scale }) => `${scale}, ${scale}`});
-  transform-origin: top left;
-`;
-
-const Image = styled.img`
-  transform: ${({ x, y }) => `translate(-${x}px, -${y}px)`};
-`;
-
-function Spritesheet({ src, frameWidth, frameHeight, column, row, scale = 1 }) {
-  return (
-    <Container width={frameWidth} height={frameHeight} scale={scale}>
-      <Image src={src} x={frameWidth * column} y={frameHeight * row} />
-    </Container>
-  );
-}
-
 const animations = {
   run: 0,
   atk1: 1,
@@ -47,68 +24,67 @@ const animations = {
   atk3: 3,
 };
 
-const spriteSheetConfig1 = {
+const spriteSheetConfig = {
   src: charaterScr,
   frameWidth: 128,
   frameHeight: 128,
   animations: {
-    [animations.run]: 8,
-    [animations.atk3]: 16,
+    [animations.run]: 7,
+    [animations.atk1]: 8,
+    [animations.atk3]: 15,
   },
 };
 
-function useSprite(spriteSheetConfig, animation) {
-  const [step, setStep] = useState(0);
-  const animationSteps = useMemo(
-    () => spriteSheetConfig.animations[animation],
-    [animation, spriteSheetConfig.animations]
-  );
-  const nextStep = () => {
-    console.log(step, animationSteps);
-    setStep(step < animationSteps ? step + 1 : 0);
-  };
-  const { src, frameHeight, frameWidth } = spriteSheetConfig;
-  return [
-    props => (
-      <Spritesheet
-        src={src}
-        frameWidth={frameWidth}
-        frameHeight={frameHeight}
-        column={step}
-        row={animation}
-        {...props}
-      />
-    ),
-    nextStep,
-  ];
-}
-
-function useInterval(callback, delay) {
-  const savedCallback = useRef();
-
-  // Remember the latest callback.
-  useEffect(() => {
-    savedCallback.current = callback;
-  }, [callback]);
-
-  // Set up the interval.
-  useEffect(() => {
-    function tick() {
-      savedCallback.current();
-    }
-    if (delay !== null) {
-      const id = setInterval(tick, delay);
-      return () => clearInterval(id);
-    }
-  }, [delay]);
-}
+const Controller = styled.div`
+  position: absolute;
+  left: ${({ x }) => x}px;
+  top: ${({ y }) => y}px;
+`;
 
 function Character() {
-  const [Sprite, nextStep] = useSprite(spriteSheetConfig1, animations.atk3);
+  const [animation, setAnimation] = useState(animations.run);
+  const [Sprite, nextAnimationStep] = useSprite(spriteSheetConfig, animation);
+
+  const [pressedKeys, setPressedKeys] = useState({});
+  useEventListener('keydown', e => {
+    setPressedKeys({ ...pressedKeys, [e.keyCode]: true });
+  });
+  useEventListener('keyup', e => {
+    setPressedKeys({ ...pressedKeys, [e.keyCode]: false });
+  });
+
+  const [movedDistance, setMoveDistance] = useState(0);
+  const [direction, setDirection] = useState();
+  const move = useCallback(
+    isGoingRight => {
+      setAnimation(animations.run);
+      setMoveDistance(movedDistance + (isGoingRight ? -10 : 10));
+      setDirection(isGoingRight);
+      nextAnimationStep();
+    },
+    [movedDistance, nextAnimationStep]
+  );
+
+  const [isBlockingAction, setBlockingAction] = useState(false);
+  const attack1 = useCallback(() => {
+    setAnimation(animations.atk1);
+    setBlockingAction(true);
+  }, []);
+
   useInterval(() => {
-    nextStep();
-  }, 100);
-  return <Sprite scale={2.5} />;
+    if (isBlockingAction) return setBlockingAction(nextAnimationStep());
+
+    if (pressedKeys[81]) return attack1();
+    if (pressedKeys[39]) move(false);
+    if (pressedKeys[37]) move(true);
+    return setAnimation(animations.run);
+  }, 55);
+
+  return (
+    <Controller x={movedDistance} y={-100}>
+      <Sprite scale={2.5} flipX={direction} />
+    </Controller>
+  );
 }
 
 export default Character;
