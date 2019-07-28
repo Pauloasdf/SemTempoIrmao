@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
-import charaterScr from './charater1_animations.png';
+import charaterScr from './character1_animations.png';
 
 /**
  * run
@@ -27,6 +27,7 @@ const Image = styled.img`
 `;
 
 function Spritesheet({ src, scale, tileWidth, tileHeight, animation, frame }) {
+  console.log(frame);
   return (
     <Container width={tileWidth} height={tileWidth} scale={scale}>
       <Image src={src} x={tileWidth * frame} y={tileHeight * animation} />
@@ -35,14 +36,22 @@ function Spritesheet({ src, scale, tileWidth, tileHeight, animation, frame }) {
 }
 
 function Character1() {
+  const [frame, setFrame] = useState(1);
+  useEffect(() => {
+    let f = 1;
+    document.addEventListener('keydown', e => {
+      f += 1;
+      setFrame(f);
+    });
+  }, []);
   return (
     <Spritesheet
       src={charaterScr}
-      scale={1}
+      scale={1.5}
       tileWidth={128}
       tileHeight={128}
       animation={1}
-      frame={1}
+      frame={frame}
     />
   );
 }
